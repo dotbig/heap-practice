@@ -1,10 +1,12 @@
 import java.util.LinkedList;
 import java.util.Stack;
 
+//maxheap for Integers
+
 public class MaxHeap{
 
-	Node root;
-	Node nextLeaf;
+	private Node root;
+	private Node nextLeaf;
 	//create an empty maxheap
 	public MaxHeap(){
 		root = null;
@@ -17,7 +19,6 @@ public class MaxHeap{
 	}
 
 	public void add(int v){
-		System.out.println("adding " + v);
 		Node newGuy = new Node(v);
 		//if heap is empty, whatever we just added is now the root
 		if (nextLeaf == null){
@@ -39,7 +40,7 @@ public class MaxHeap{
 			root = newGuy;
 		}
 		//after giving it another child, ensure nextLeaf is the next non-full node
-		nextLeaf = available(root);
+		nextLeaf = available();
 	}
 
 	private void bubbleUp(Node n){
@@ -47,7 +48,6 @@ public class MaxHeap{
 		//if our parent is null then we're the root of the tree; we're done
 		//if our parent's value is smaller than ours then we need to swap with them
 		while ((current.parent != null) && (current.val > current.parent.val)){
-			System.out.println("bubbleup: swapping "+current.val+ " and " + current.parent.val);
 			Node parent = current.parent;
 			Node grandparent = parent.parent;
 			Node sibling;
@@ -55,16 +55,16 @@ public class MaxHeap{
 			//store our own information for later
 			Node copy = clone(current);
 			//we swap roles with our parent, this means ..
-			if (current.left != null){
-				current.left.parent = parent;			//if we have any children,
-			}											//our (ex)parent is now their parent
+			if (current.left != null){					//if we have any children,
+				current.left.parent = parent;			//our (ex)parent is now their parent
+			}											
 			if (current.right != null){
 				current.right.parent = parent;
 			}
 
-			if (current == parent.left) { 				//if we're the left child
-				sibling = parent.right; 				//then our sibling is the right child
-				if (sibling != null){
+			if (current == parent.left) { 				
+				sibling = parent.right; 				//if we're the left child
+				if (sibling != null){					//then our sibling is the right child
 					sibling.parent = current;			//and we become our siblings parent
 				}
 				current.parent = grandparent;			//our grandparent is now just our parent
@@ -72,9 +72,9 @@ public class MaxHeap{
 				current.right = sibling;				//our sibling becomes our child
 			} else { 								
 				sibling = parent.left; 			
-				if (sibling != null){
-					sibling.parent = current;			//mirrored for the right child case
-				}										//if we're the right child, sibling is the left child
+				if (sibling != null){					//mirrored for the right child case
+					sibling.parent = current;			//if we're the right child, sibling is the left child
+				}										
 				current.parent = grandparent;	
 				current.left = sibling;			
 				current.right = parent;			
@@ -90,12 +90,12 @@ public class MaxHeap{
 				} else grandparent.right = current;
 			}
 		}
-		System.out.println();
 	}
 
-	public int remove(){
+	//retrieve the top element of the heap. returns null if heap is empty
+	public Integer remove(){
 		if (root == null){
-			return 0;			//for now, if the heap is empty we'll return 0. this is wrong
+			return null;
 		}
 		//save the current root's value to return later
 		int value = root.val;
@@ -122,6 +122,8 @@ public class MaxHeap{
 		root = last;
 		//bubble the new root downwards to maintain heap integrity
 		bubbleDown(root);
+		//make sure nextLeaf is corrent, after everything
+		nextLeaf = available();
 		//return the previous root's value
 		return value;
 	}
@@ -131,7 +133,6 @@ public class MaxHeap{
 		Node elder = eldest(current);
 		while ((elder != null) && (elder.val > current.val)) {
 			//swap current with elder
-			System.out.println("bubbledown: swap "+ current.val + " with "+ elder.val);
 			
 			Node copy = clone(elder);
 
@@ -169,12 +170,10 @@ public class MaxHeap{
 			current.right = copy.right;
 
 			if (elder.parent == null){
-				System.out.println("setting " + elder.val + " as root");
 				root = elder;
 			}
 			elder = eldest(current);
 		}
-		System.out.println();
 	}
 
 	//returns the larger of the given node's children
@@ -196,8 +195,8 @@ public class MaxHeap{
 	}
 
 	//breadth first search that returns the first node that has room for children
-	private static Node available(Node n){
-		Node check = n;
+	private Node available(){
+		Node check = root;
 		LinkedList<Node> q = new LinkedList<Node>();
 		while (check != null){
 			if (check.left == null || check.right == null){
@@ -234,14 +233,52 @@ public class MaxHeap{
 		return null;
 	}
 
-	//get minimum value in heap
-	//its not implemented yet
-	public int getMin(){
-		return 0;
+	//returns true if heap is empty
+	public boolean isEmpty(){
+		if (root == null){
+			return true;
+		} else return false;
 	}
 
+	//returns the number of elements in the heap
+	public int size(){
+		return count(root);
+	}
+
+	private int count(Node root){
+		if (root == null){
+			return 0;
+		}
+		return 1 + count(root.left) + count(root.right);
+	}
+
+	//get minimum value in heap
+	public Integer min(){
+		return minLeaf(root);
+	}
+
+	//just checks leaves
+	private Integer minLeaf(Node root){
+		if (root == null){
+			return null;
+		}
+		if (root.left == null && root.right == null){ 	//no children means we're a leaf
+			return root.val;
+		}
+		if (root.left != null && root.right == null){	
+			return minLeaf(root.left);
+		}
+		if (root.left == null && root.right != null){
+			return minLeaf(root.right);
+		}
+		Integer leftMin = minLeaf(root.left);
+		Integer rightMin = minLeaf(root.right);
+		if (leftMin < rightMin){return leftMin;}
+		else {return rightMin;}
+	}
+	
 	//return a clone of the given node
-	public Node clone(Node n){
+	private Node clone(Node n){
 		Node impostor = new Node();
 		impostor.parent = n.parent;
 		impostor.left = n.left;
@@ -323,7 +360,7 @@ public class MaxHeap{
 		Node(int v) {val = v;}
 		Node() {}
 
-		public void info(){
+		void info(){
 			System.out.print("val: " + val); System.out.print("\n");
 			if (parent != null){
 				System.out.print("parent: " + parent.val);
